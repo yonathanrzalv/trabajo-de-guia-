@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelVault Games - Tienda & Arriendos UML</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gaming: {
+                            900: '#0f0c1b',
+                            800: '#1a1429',
+                            700: '#261e3d',
+                            accent: '#9333ea', 
+                            neon: '#c084fc',
+                            glow: '#a855f7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .glow-effect:hover {
+            box-shadow: 0 0 25px rgba(147, 51, 234, 0.4);
+            transform: translateY(-4px);
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gaming-900 text-slate-100 min-h-screen flex flex-col selection:bg-purple-500 selection:text-white">
+
+    <!-- Modal / Pantalla de Inicio de Sesión (Instancia de Clase Cliente) -->
+    <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div class="bg-gaming-800 border border-purple-900/60 p-8 rounded-2xl max-w-md w-full shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <div class="inline-block bg-gradient-to-tr from-purple-600 to-fuchsia-500 p-3 rounded-2xl shadow-lg shadow-purple-900/50 mb-2">
+                    <i class="fa-solid fa-gamepad text-2xl text-white"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-fuchsia-400">Identificación de Cliente</h2>
+                <p class="text-xs text-purple-400">Instancia la clase Cliente para iniciar sesión</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-2">Nombre del Cliente (+String nombre)</label>
+                    <input type="text" id="loginName" required placeholder="Ej. Juan Pérez" class="w-full bg-gaming-900 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-1">RUT (+String rut - 8 dígitos con guion)</label>
+                    <input type="text" id="loginRut" required placeholder="Ej. 12345678-9" maxlength="10" class="w-full bg-gaming-900 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm">
+                    <span id="rutError" class="text-xs text-rose-400 hidden mt-1 block">RUT inválido. Debe contener 8 dígitos y guion (Ej: 12345678-9).</span>
+                </div>
+                <button type="submit" class="w-full py-3 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold rounded-xl transition shadow-lg shadow-purple-600/30">
+                    Ingresar Sistema
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Profesional de Pago y Despacho -->
+    <div id="checkoutModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 hidden">
+        <div class="bg-gaming-800 border border-purple-900/60 p-8 rounded-2xl max-w-xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-purple-900/40 pb-4">
+                <h2 class="text-xl font-bold flex items-center gap-2 text-purple-200">
+                    <i class="fa-solid fa-credit-card text-fuchsia-400"></i> Pasarela de Pago Profesional
+                </h2>
+                <button onclick="toggleCheckoutModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form onsubmit="processProfessionalCheckout(event)" class="space-y-4">
+                <div>
+                    <h3 class="text-xs font-semibold text-purple-300 uppercase tracking-wider mb-3"><i class="fa-solid fa-truck-fast mr-1"></i> Despacho y Envío de Boleta</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="sm:col-span-2">
+                            <input type="email" id="payEmail" required placeholder="Correo Electrónico (para enviar boleta)" class="w-full bg-gaming-900 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm">
+                            <span id="emailError" class="text-xs text-rose-400 hidden mt-1 block">Ingresa un correo electrónico válido.</span>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <input type="text" id="payAddress" required placeholder="Dirección completa (Calle y Número)" class="w-full bg-gaming-900 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm">
+                            <span id="addressError" class="text-xs text-rose-400 hidden mt-1 block">Ingresa una dirección real (mínimo 8 caracteres).</span>
+                        </div>
+                        <div>
+                            <input type="text" id="payCity" required placeholder="Comuna / Ciudad" class="w-full bg-gaming-900 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm">
+                            <span id="cityError" class="text-xs text-rose-400 hidden mt-1 block">Ingresa una comuna válida.</span>
+                        </div>
+                        <div>
+                            <input type="tel" id="payPhone" required placeholder="Teléfono (9 dígitos: 912345678)" maxlength="9" class="w-full bg-gaming-900 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm">
+                            <span id="phoneError" class="text-xs text-rose-400 hidden mt-1 block">Deben ser 9 dígitos numéricos.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-semibold text-purple-300 uppercase tracking-wider mb-3"><i class="fa-solid fa-wallet mr-1"></i> Método de Pago</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="border border-purple-900/50 bg-gaming-900 p-3 rounded-xl text-center cursor-pointer hover:border-purple-500 transition flex flex-col items-center justify-center gap-2">
+                            <input type="radio" name="paymentMethod" value="tarjeta" checked onchange="togglePaymentFields('tarjeta')" class="accent-purple-500">
+                            <span class="text-xs font-semibold text-slate-200"><i class="fa-solid fa-credit-card text-fuchsia-400 block text-lg mb-1"></i> Tarjeta</span>
+                        </label>
+                        <label class="border border-purple-900/50 bg-gaming-900 p-3 rounded-xl text-center cursor-pointer hover:border-purple-500 transition flex flex-col items-center justify-center gap-2">
+                            <input type="radio" name="paymentMethod" value="transferencia" onchange="togglePaymentFields('transferencia')" class="accent-purple-500">
+                            <span class="text-xs font-semibold text-slate-200"><i class="fa-solid fa-building-columns text-fuchsia-400 block text-lg mb-1"></i> Transferencia</span>
+                        </label>
+                        <label class="border border-purple-900/50 bg-gaming-900 p-3 rounded-xl text-center cursor-pointer hover:border-purple-500 transition flex flex-col items-center justify-center gap-2">
+                            <input type="radio" name="paymentMethod" value="efectivo" onchange="togglePaymentFields('efectivo')" class="accent-purple-500">
+                            <span class="text-xs font-semibold text-slate-200"><i class="fa-solid fa-money-bill-wave text-fuchsia-400 block text-lg mb-1"></i> Webpay</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="cardFields" class="space-y-3 bg-gaming-900/60 p-4 rounded-xl border border-purple-900/30">
+                    <div>
+                        <input type="text" id="cardNumber" placeholder="Número de Tarjeta (16 dígitos)" maxlength="16" class="w-full bg-gaming-800 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm">
+                        <span id="cardNumError" class="text-xs text-rose-400 hidden mt-1 block">Debe tener exactamente 16 dígitos.</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <input type="text" id="cardExpiry" placeholder="MM/AA" maxlength="5" class="w-full bg-gaming-800 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm">
+                            <span id="cardExpError" class="text-xs text-rose-400 hidden mt-1 block">Formato MM/AA.</span>
+                        </div>
+                        <div>
+                            <input type="password" id="cardCvv" placeholder="CVV" maxlength="4" class="w-full bg-gaming-800 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm">
+                            <span id="cardCvvError" class="text-xs text-rose-400 hidden mt-1 block">3 o 4 dígitos.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="transferFields" class="hidden space-y-2 bg-gaming-900/60 p-4 rounded-xl border border-purple-900/30 text-xs text-slate-300">
+                    <p class="font-bold text-purple-300">Datos para transferencia bancaria:</p>
+                    <p>Banco Estado - Cuenta Corriente: <span class="text-fuchsia-400">12345678-9</span></p>
+                    <p>R.U.T.: <span class="text-fuchsia-400">76.543.210-K</span></p>
+                </div>
+
+                <div class="bg-gaming-900/80 p-4 rounded-xl border border-purple-900/40 flex justify-between items-center text-sm">
+                    <span class="text-slate-400">Total a Cancelar:</span>
+                    <span id="checkoutModalTotal" class="text-xl font-extrabold text-fuchsia-400">$0</span>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold rounded-xl transition shadow-lg shadow-purple-600/30">
+                    Confirmar y Pagar Orden
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <header class="sticky top-0 z-40 bg-gaming-800/80 backdrop-blur-md border-b border-purple-900/40 px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-tr from-purple-600 to-fuchsia-500 p-2.5 rounded-xl shadow-lg shadow-purple-900/50">
+                <i class="fa-solid fa-gamepad text-xl text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-extrabold tracking-wider bg-gradient-to-r from-white via-purple-200 to-fuchsia-400 bg-clip-text text-transparent">PIXELVAULT</h1>
+                <span class="text-xs text-purple-400 font-medium tracking-widest uppercase">Games & Rentals API</span>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3 flex-wrap">
+            <div class="hidden sm:flex items-center space-x-2 bg-gaming-900/80 px-4 py-2 rounded-full border border-purple-800/60 text-sm">
+                <i class="fa-solid fa-user-check text-fuchsia-400"></i>
+                <span id="userDisplayName" class="font-medium text-slate-200">Invitado</span>
+                <span id="userPuntos" class="text-xs text-amber-400 font-bold ml-1">(0 Pts)</span>
+            </div>
+
+            <!-- Toggle VIP Mode (+boolean esVIP) -->
+            <div class="flex items-center space-x-3 bg-gaming-900/80 px-4 py-2 rounded-full border border-purple-800/60 shadow-inner">
+                <span class="text-sm font-semibold flex items-center gap-2">
+                    <i class="fa-solid fa-crown text-amber-400"></i> Modo VIP (<span id="vipDiscountText" class="text-slate-300">10% Off</span>)
+                </span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="vipToggle" class="sr-only peer" onchange="toggleVIPMode()">
+                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
+            </div>
+
+            <button onclick="switchTab('catalogo')" id="btnTabCatalogo" class="px-3 py-2 rounded-lg bg-purple-600 text-white font-semibold text-xs transition shadow-lg shadow-purple-600/30">
+                <i class="fa-solid fa-store mr-1"></i>Catálogo
+            </button>
+            <button onclick="switchTab('arriendos')" id="btnTabArriendos" class="px-3 py-2 rounded-lg bg-gaming-700 hover:bg-gaming-600 text-slate-300 font-semibold text-xs transition">
+                <i class="fa-solid fa-clock-rotate-left mr-1"></i>Arriendos
+            </button>
+            <button onclick="switchTab('multas')" id="btnTabMultas" class="px-3 py-2 rounded-lg bg-gaming-700 hover:bg-gaming-600 text-slate-300 font-semibold text-xs transition relative">
+                <i class="fa-solid fa-triangle-exclamation mr-1 text-rose-400"></i>Módulo Multas
+                <span id="multasBadge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+            </button>
+            
+            <button onclick="toggleCart()" class="relative bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-lg font-semibold text-xs transition flex items-center gap-2 shadow-lg shadow-purple-600/30">
+                <i class="fa-solid fa-cart-shopping"></i> Carrito
+                <span id="cartCount" class="absolute -top-2 -right-2 bg-fuchsia-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6">
+        <!-- VISTA CATÁLOGO -->
+        <section id="viewCatalogo" class="space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-gaming-800/50 p-4 rounded-2xl border border-purple-900/30">
+                <div class="relative w-full md:w-96">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-purple-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="searchInput" oninput="filterProducts()" placeholder="Buscar por título o plataforma..." class="w-full bg-gaming-900/90 text-slate-200 pl-11 pr-4 py-2.5 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 transition text-sm">
+                </div>
+                <div class="text-sm text-purple-300 font-medium">
+                    Catálogo de <span class="text-fuchsia-400 font-bold">Productos</span>
+                </div>
+            </div>
+
+            <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <!-- VISTA ARRIENDOS (Clase Arriendo) -->
+        <section id="viewArriendos" class="hidden space-y-6">
+            <div class="bg-gaming-800/60 p-6 rounded-2xl border border-purple-900/40">
+                <h2 class="text-2xl font-bold mb-2 flex items-center gap-3 text-purple-200">
+                    <i class="fa-solid fa-calendar-days text-fuchsia-400"></i> Módulo de Gestión de Arriendos
+                </h2>
+                <p class="text-slate-400 text-sm mb-6">Utiliza la clase `Arriendo` para procesar el pedido y ejecutar `calcularMulta(diasAtraso)`.</p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-4 bg-gaming-900/60 p-6 rounded-xl border border-purple-900/30">
+                        <h3 class="text-lg font-semibold text-purple-300 mb-4">Configurar Arriendo</h3>
+                        
+                        <div>
+                            <label class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-2">Seleccionar Producto</label>
+                            <select id="rentalGameSelect" class="w-full bg-gaming-800 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm"></select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-2">Fecha Inicio (+Date fechaInicio)</label>
+                                <input type="date" id="rentalStartDate" class="w-full bg-gaming-800 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-2">Fecha Límite (+Date fechaLimite)</label>
+                                <input type="date" id="rentalLimitDate" class="w-full bg-gaming-800 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-2">Días de Atraso real (Int diasAtraso)</label>
+                            <input type="number" id="rentalDelayDays" min="0" value="0" oninput="calculateRentalPreview()" class="w-full bg-gaming-800 text-slate-200 p-3 rounded-xl border border-purple-900/50 focus:outline-none focus:border-purple-500 text-sm">
+                        </div>
+
+                        <button onclick="confirmRental()" class="w-full mt-2 py-3 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold rounded-xl transition shadow-lg shadow-purple-600/30">
+                            Registrar Arriendo
+                        </button>
+                    </div>
+
+                    <div class="bg-gaming-900/60 p-6 rounded-xl border border-purple-900/30 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-purple-300 mb-4">Desglose Financiero del Arriendo</h3>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex justify-between py-2 border-b border-slate-800">
+                                    <span class="text-slate-400">Tarifa Base:</span>
+                                    <span id="previewBasePrice" class="font-bold text-slate-200">$0</span>
+                                </div>
+                                <div class="flex justify-between py-2 border-b border-slate-800">
+                                    <span class="text-slate-400">Días Calculados:</span>
+                                    <span id="previewDays" class="font-bold text-slate-200">0 días</span>
+                                </div>
+                                <div class="flex justify-between py-2 border-b border-slate-800">
+                                    <span class="text-slate-400">Descuento VIP (10%):</span>
+                                    <span id="previewVipDiscount" class="font-bold text-emerald-400">-$0</span>
+                                </div>
+                                <div class="flex justify-between py-2 border-b border-slate-800">
+                                    <span class="text-slate-400">calcularMulta(diasAtraso):</span>
+                                    <span id="previewFine" class="font-bold text-rose-400">$0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gaming-800/80 p-4 rounded-xl border border-purple-900/50 mt-6 flex justify-between items-center">
+                            <span class="font-bold text-base text-slate-300">Total Arriendo:</span>
+                            <span id="previewTotal" class="text-2xl font-extrabold text-fuchsia-400">$0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA MULTAS -->
+        <section id="viewMultas" class="hidden space-y-6">
+            <div class="bg-gaming-800/60 p-6 rounded-2xl border border-purple-900/40">
+                <h2 class="text-2xl font-bold flex items-center gap-3 text-purple-200 mb-4">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Módulo de Gestión de Multas
+                </h2>
+                <div class="overflow-x-auto rounded-xl border border-purple-900/30">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="bg-gaming-900/80 text-xs font-semibold text-purple-300 uppercase tracking-wider border-b border-purple-900/40">
+                            <tr>
+                                <th class="p-4">Cliente</th>
+                                <th class="p-4">Producto</th>
+                                <th class="p-4">Días Atraso</th>
+                                <th class="p-4">Monto Multa</th>
+                                <th class="p-4">Estado</th>
+                                <th class="p-4 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="multasTableBody" class="divide-y divide-slate-800"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Drawer del Carrito (Clase Venta) -->
+    <div id="cartDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-gaming-800 border-l border-purple-900/50 p-6 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col justify-between">
+        <div>
+            <div class="flex justify-between items-center mb-6 border-b border-purple-900/40 pb-4">
+                <h2 class="text-xl font-bold flex items-center gap-2 text-purple-200">
+                    <i class="fa-solid fa-cart-shopping text-fuchsia-400"></i> Carrito (Clase Venta)
+                </h2>
+                <button onclick="toggleCart()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div id="cartItemsList" class="space-y-4 max-h-[50vh] overflow-y-auto pr-2"></div>
+        </div>
+
+        <div class="border-t border-purple-900/40 pt-4 space-y-3">
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Subtotal:</span>
+                <span id="cartSubtotal" class="font-semibold text-slate-200">$0</span>
+            </div>
+            <div id="cartVipRow" class="flex justify-between text-sm hidden">
+                <span class="text-emerald-400">Descuento VIP (10%):</span>
+                <span id="cartVipDiscount" class="font-semibold text-emerald-400">-$0</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-400">calcularImpuestos() [IVA 19%]:</span>
+                <span id="cartIva" class="font-semibold text-slate-200">$0</span>
+            </div>
+            <div class="flex justify-between text-lg font-bold border-t border-slate-700 pt-2">
+                <span class="text-purple-300">Total (+double total):</span>
+                <span id="cartTotal" class="text-fuchsia-400 text-xl">$0</span>
+            </div>
+            <button onclick="checkout()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold rounded-xl transition shadow-lg shadow-purple-600/30 mt-2">
+                Proceder al Pago
+            </button>
+        </div>
+    </div>
+
+    <div id="cartOverlay" onclick="toggleCart()" class="fixed inset-0 bg-black/60 z-40 hidden backdrop-blur-sm"></div>
+
+    <footer class="bg-gaming-800/40 border-t border-purple-900/20 text-center py-4 text-xs text-slate-500">
+        PixelVault Games Enterprise &copy; 2026 — Basado en el diagrama UML del dominio.
+    </footer>
+
+    <!-- IMPLEMENTACIÓN DE LAS CLASES DEL DIAGRAMA UML -->
+    <script>
+        // 1. CLASE PRODUCTO (UML)
+        class Producto {
+            constructor(id, nombre, plataforma, precio, stock, imagen) {
+                this.id = id;                       // +String id
+                this.nombre = nombre;               // +String nombre
+                this.plataforma = plataforma;       // +String plataforma
+                this.precio = precio;               // +double precio
+                this.stock = stock;                 // +int stock
+                this.imagen = imagen;
+            }
+
+            // +boolean verificarStock()
+            verificarStock() {
+                return this.stock > 0;
+            }
+        }
+
+        // 2. CLASE CLIENTE (UML)
+        class Cliente {
+            constructor(rut, nombre, esVIP = false, puntos = 0) {
+                this.rut = rut;                     // +String rut
+                this.nombre = nombre;               // +String nombre
+                this.esVIP = esVIP;                 // +boolean esVIP
+                this.puntos = puntos;               // +int puntos
+            }
+        }
+
+        // 3. CLASE ARRIENDO (UML)
+        class Arriendo {
+            constructor(idArriendo, fechaInicio, fechaLimite, producto, cliente) {
+                this.idArriendo = idArriendo;       // +String idArriendo
+                this.fechaInicio = fechaInicio;     // +Date fechaInicio
+                this.fechaLimite = fechaLimite;     // +Date fechaLimite
+                this.producto = producto;           // Relación 1..* -- 1
+                this.cliente = cliente;             // Relación 1 -- 0..*
+            }
+
+            // +double calcularMulta(int diasAtraso)
+            calcularMulta(diasAtraso) {
+                const MULTA_POR_DIA = 1500;
+                return diasAtraso > 0 ? diasAtraso * MULTA_POR_DIA : 0;
+            }
+        }
+
+        // 4. CLASE VENTA (UML)
+        class Venta {
+            constructor(idVenta, cliente) {
+                this.idVenta = idVenta;             // +String idVenta
+                this.total = 0;                     // +double total
+                this.cliente = cliente;             // Relación 1 -- 0..*
+                this.productos = [];                // Relación 1..* -- 1
+                this.impuesto = 0;
+            }
+
+            // +void calcularImpuestos()
+            calcularImpuestos(subtotalConDescuento) {
+                this.impuesto = subtotalConDescuento * 0.19;
+                return this.impuesto;
+            }
+        }
+
+        // --- INSTANCIACIÓN DEL INVENTARIO ---
+        let inventarioProductos = [
+            new Producto('P001', 'Cyberpunk 2077', 'PC / Steam', 29990, 8, 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=600&auto=format&fit=crop'),
+            new Producto('P002', 'Elden Ring', 'PlayStation 5', 39990, 5, 'https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?q=80&w=600&auto=format&fit=crop'),
+            new Producto('P003', 'God of War Ragnarök', 'PlayStation 5', 44990, 3, 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600&auto=format&fit=crop'),
+            new Producto('P004', 'Zelda: Tears of the Kingdom', 'Nintendo Switch', 49990, 6, 'https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=600&auto=format&fit=crop'),
+            new Producto('P005', 'Halo Infinite', 'Xbox Series X', 24990, 10, 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=600&auto=format&fit=crop'),
+            new Producto('P006', 'Resident Evil 4 Remake', 'PC / Steam', 34990, 4, 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=600&auto=format&fit=crop')
+        ];
+
+        let clienteActual = new Cliente('12345678-9', 'Cliente Invitado', false, 100);
+        let carritoVenta = new Venta('V-' + Date.now(), clienteActual);
+        let listaMultasHistorial = [];
+
+        function validateRut(rut) {
+            return /^\d{7,8}-[0-9kK]{1}$/.test(rut);
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const nombre = document.getElementById('loginName').value.trim();
+            const rut = document.getElementById('loginRut').value.trim();
+            const rutErr = document.getElementById('rutError');
+
+            if (!validateRut(rut)) {
+                rutErr.classList.remove('hidden');
+                return;
+            } else {
+                rutErr.classList.add('hidden');
+            }
+
+            clienteActual = new Cliente(rut, nombre, clienteActual.esVIP, 150);
+            document.getElementById('userDisplayName').innerText = `${clienteActual.nombre} (${clienteActual.rut})`;
+            document.getElementById('userPuntos').innerText = `(${clienteActual.puntos} Pts)`;
+            document.getElementById('loginModal').classList.add('hidden');
+        }
+
+        function toggleVIPMode() {
+            clienteActual.esVIP = document.getElementById('vipToggle').checked;
+            const vipText = document.getElementById('vipDiscountText');
+            if (clienteActual.esVIP) {
+                vipText.innerText = '¡VIP Activo! (-10%)';
+                vipText.className = 'text-emerald-400 font-bold';
+            } else {
+                vipText.innerText = '10% Off';
+                vipText.className = 'text-slate-300';
+            }
+            updateCartUI();
+            calculateRentalPreview();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderProducts(inventarioProductos);
+            populateRentalSelect();
+            setDefaultDates();
+            calculateRentalPreview();
+            renderMultasTable();
+        });
+
+        function switchTab(tab) {
+            const viewCat = document.getElementById('viewCatalogo');
+            const viewArr = document.getElementById('viewArriendos');
+            const viewMul = document.getElementById('viewMultas');
+
+            const btnCat = document.getElementById('btnTabCatalogo');
+            const btnArr = document.getElementById('btnTabArriendos');
+            const btnMul = document.getElementById('btnTabMultas');
+
+            viewCat.classList.add('hidden');
+            viewArr.classList.add('hidden');
+            viewMul.classList.add('hidden');
+
+            btnCat.className = "px-3 py-2 rounded-lg bg-gaming-700 hover:bg-gaming-600 text-slate-300 font-semibold text-xs transition";
+            btnArr.className = "px-3 py-2 rounded-lg bg-gaming-700 hover:bg-gaming-600 text-slate-300 font-semibold text-xs transition";
+            btnMul.className = "px-3 py-2 rounded-lg bg-gaming-700 hover:bg-gaming-600 text-slate-300 font-semibold text-xs transition relative";
+
+            if (tab === 'catalogo') {
+                viewCat.classList.remove('hidden');
+                btnCat.className = "px-3 py-2 rounded-lg bg-purple-600 text-white font-semibold text-xs transition shadow-lg shadow-purple-600/30";
+            } else if (tab === 'arriendos') {
+                viewArr.classList.remove('hidden');
+                btnArr.className = "px-3 py-2 rounded-lg bg-purple-600 text-white font-semibold text-xs transition shadow-lg shadow-purple-600/30";
+                calculateRentalPreview();
+            } else if (tab === 'multas') {
+                viewMul.classList.remove('hidden');
+                btnMul.className = "px-3 py-2 rounded-lg bg-purple-600 text-white font-semibold text-xs transition shadow-lg shadow-purple-600/30 relative";
+                renderMultasTable();
+            }
+        }
+
+        function renderProducts(items) {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+
+            items.forEach(p => {
+                grid.innerHTML += `
+                    <div class="bg-gaming-800/80 rounded-2xl overflow-hidden border border-purple-900/40 glow-effect transition-all flex flex-col justify-between">
+                        <div>
+                            <div class="relative h-44 w-full overflow-hidden bg-gaming-900">
+                                <img src="${p.imagen}" alt="${p.nombre}" class="w-full h-full object-cover opacity-85 hover:scale-105 transition duration-500">
+                                <div class="absolute top-3 left-3">
+                                    <span class="bg-purple-950/90 backdrop-blur-sm text-fuchsia-400 text-xs px-3 py-1 rounded-full font-bold border border-purple-800/50 shadow-md">${p.plataforma}</span>
+                                </div>
+                            </div>
+                            <div class="p-5">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-xs font-semibold ${p.verificarStock() ? 'text-emerald-400' : 'text-rose-400'}">
+                                        <i class="fa-solid fa-box mr-1"></i> Stock: ${p.stock}
+                                    </span>
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-100 mb-2 truncate">${p.nombre}</h3>
+                                <div class="text-2xl font-black text-fuchsia-400 mb-4">
+                                    $${p.precio.toLocaleString('es-CL')}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="px-5 pb-5">
+                            <button onclick="addToCart('${p.id}')" ${!p.verificarStock() ? 'disabled' : ''} class="w-full py-2.5 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 ${p.verificarStock() ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}">
+                                <i class="fa-solid fa-cart-plus"></i> ${p.verificarStock() ? 'Agregar al Carrito' : 'Agotado'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterProducts() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = inventarioProductos.filter(p => p.nombre.toLowerCase().includes(query) || p.plataforma.toLowerCase().includes(query));
+            renderProducts(filtered);
+        }
+
+        function addToCart(id) {
+            const producto = inventarioProductos.find(p => p.id === id);
+            
+            // Ejecución del método UML verificarStock()
+            if (!producto || !producto.verificarStock()) {
+                alert(`Sin stock disponible para ${producto ? producto.nombre : 'el producto'}.`);
+                return;
+            }
+
+            producto.stock--;
+            const itemEnCarrito = carritoVenta.productos.find(item => item.producto.id === id);
+            if (itemEnCarrito) {
+                itemEnCarrito.cantidad++;
+            } else {
+                carritoVenta.productos.push({ producto, cantidad: 1 });
+            }
+
+            renderProducts(inventarioProductos);
+            updateCartUI();
+            toggleCart();
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cartItemsList');
+            const countBadge = document.getElementById('cartCount');
+            const vipRow = document.getElementById('cartVipRow');
+            list.innerHTML = '';
+
+            let totalItems = 0;
+            let subtotal = 0;
+
+            carritoVenta.productos.forEach(item => {
+                totalItems += item.cantidad;
+                subtotal += item.producto.precio * item.cantidad;
+
+                list.innerHTML += `
+                    <div class="flex justify-between items-center bg-gaming-900/60 p-3 rounded-xl border border-purple-900/30">
+                        <div class="flex items-center gap-3">
+                            <img src="${item.producto.imagen}" class="w-12 h-12 object-cover rounded-lg border border-purple-900">
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-200">${item.producto.nombre}</h4>
+                                <span class="text-xs text-purple-400">$${item.producto.precio.toLocaleString('es-CL')} x ${item.cantidad}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold text-fuchsia-400">$${(item.producto.precio * item.cantidad).toLocaleString('es-CL')}</span>
+                            <button onclick="removeFromCart('${item.producto.id}')" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            countBadge.innerText = totalItems;
+
+            let vipDiscount = clienteActual.esVIP ? subtotal * 0.10 : 0;
+            let subtotalConDescuento = subtotal - vipDiscount;
+
+            if (clienteActual.esVIP && subtotal > 0) {
+                vipRow.classList.remove('hidden');
+                document.getElementById('cartVipDiscount').innerText = `-$${Math.round(vipDiscount).toLocaleString('es-CL')}`;
+            } else {
+                vipRow.classList.add('hidden');
+            }
+
+            // Ejecución del método UML calcularImpuestos()
+            const iva = carritoVenta.calcularImpuestos(subtotalConDescuento);
+            carritoVenta.total = subtotalConDescuento + iva;
+
+            document.getElementById('cartSubtotal').innerText = `$${Math.round(subtotal).toLocaleString('es-CL')}`;
+            document.getElementById('cartIva').innerText = `$${Math.round(iva).toLocaleString('es-CL')}`;
+            document.getElementById('cartTotal').innerText = `$${Math.round(carritoVenta.total).toLocaleString('es-CL')}`;
+        }
+
+        function removeFromCart(id) {
+            const index = carritoVenta.productos.findIndex(item => item.producto.id === id);
+            if (index !== -1) {
+                const producto = inventarioProductos.find(p => p.id === id);
+                if (producto) producto.stock += carritoVenta.productos[index].cantidad;
+                carritoVenta.productos.splice(index, 1);
+                renderProducts(inventarioProductos);
+                updateCartUI();
+            }
+        }
+
+        function checkout() {
+            if (carritoVenta.productos.length === 0) {
+                alert('El carrito está vacío.');
+                return;
+            }
+            toggleCart();
+            toggleCheckoutModal();
+        }
+
+        function toggleCheckoutModal() {
+            const modal = document.getElementById('checkoutModal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                document.getElementById('checkoutModalTotal').innerText = document.getElementById('cartTotal').innerText;
+            }
+        }
+
+        function togglePaymentFields(method) {
+            const cardFields = document.getElementById('cardFields');
+            const transferFields = document.getElementById('transferFields');
+            if (method === 'tarjeta') {
+                cardFields.classList.remove('hidden');
+                transferFields.classList.add('hidden');
+            } else if (method === 'transferencia') {
+                cardFields.classList.add('hidden');
+                transferFields.classList.remove('hidden');
+            } else {
+                cardFields.classList.add('hidden');
+                transferFields.classList.add('hidden');
+            }
+        }
+
+        function processProfessionalCheckout(event) {
+            event.preventDefault();
+            const email = document.getElementById('payEmail').value.trim();
+            const address = document.getElementById('payAddress').value.trim();
+            const city = document.getElementById('payCity').value.trim();
+            const phone = document.getElementById('payPhone').value.trim();
+            
+            let isValid = true;
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                document.getElementById('emailError').classList.remove('hidden');
+                isValid = false;
+            } else {
+                document.getElementById('emailError').classList.add('hidden');
+            }
+
+            if (address.length < 8) {
+                document.getElementById('addressError').classList.remove('hidden');
+                isValid = false;
+            } else {
+                document.getElementById('addressError').classList.add('hidden');
+            }
+
+            if (city.length < 3) {
+                document.getElementById('cityError').classList.remove('hidden');
+                isValid = false;
+            } else {
+                document.getElementById('cityError').classList.add('hidden');
+            }
+
+            if (!/^\d{9}$/.test(phone)) {
+                document.getElementById('phoneError').classList.remove('hidden');
+                isValid = false;
+            } else {
+                document.getElementById('phoneError').classList.add('hidden');
+            }
+
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            if (paymentMethod === 'tarjeta') {
+                const cardNum = document.getElementById('cardNumber').value.trim();
+                const cardExp = document.getElementById('cardExpiry').value.trim();
+                const cardCvv = document.getElementById('cardCvv').value.trim();
+
+                if (!/^\d{16}$/.test(cardNum)) {
+                    document.getElementById('cardNumError').classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    document.getElementById('cardNumError').classList.add('hidden');
+                }
+
+                if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardExp)) {
+                    document.getElementById('cardExpError').classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    document.getElementById('cardExpError').classList.add('hidden');
+                }
+
+                if (!/^\d{3,4}$/.test(cardCvv)) {
+                    document.getElementById('cardCvvError').classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    document.getElementById('cardCvvError').classList.add('hidden');
+                }
+            }
+
+            if (!isValid) return;
+
+            // Aumentar puntos al Cliente
+            clienteActual.puntos += 50;
+            document.getElementById('userPuntos').innerText = `(${clienteActual.puntos} Pts)`;
+
+            alert(`¡Venta #${carritoVenta.idVenta} procesada con éxito!\nBoleta enviada a: ${email}\nCliente: ${clienteActual.nombre}\nPuntos acumulados: ${clienteActual.puntos} Pts`);
+            
+            carritoVenta.productos = [];
+            updateCartUI();
+            toggleCart();
+            toggleCheckoutModal();
+        }
+
+        function populateRentalSelect() {
+            const select = document.getElementById('rentalGameSelect');
+            select.innerHTML = '';
+            inventarioProductos.forEach(p => {
+                select.innerHTML += `<option value="${p.id}">${p.nombre} (${p.plataforma}) - $${p.precio.toLocaleString('es-CL')}</option>`;
+            });
+            select.addEventListener('change', calculateRentalPreview);
+        }
+
+        function setDefaultDates() {
+            const today = new Date();
+            const nextWeek = new Date();
+            nextWeek.setDate(today.getDate() + 7);
+
+            document.getElementById('rentalStartDate').valueAsDate = today;
+            document.getElementById('rentalLimitDate').valueAsDate = nextWeek;
+            
+            document.getElementById('rentalStartDate').addEventListener('change', calculateRentalPreview);
+            document.getElementById('rentalLimitDate').addEventListener('change', calculateRentalPreview);
+        }
+
+        function calculateRentalPreview() {
+            const selectId = document.getElementById('rentalGameSelect').value;
+            const producto = inventarioProductos.find(p => p.id === selectId) || inventarioProductos[0];
+            
+            const startStr = document.getElementById('rentalStartDate').value;
+            const limitStr = document.getElementById('rentalLimitDate').value;
+            const delayDays = parseInt(document.getElementById('rentalDelayDays').value) || 0;
+
+            let days = 7;
+            if (startStr && limitStr) {
+                const d1 = new Date(startStr);
+                const d2 = new Date(limitStr);
+                const diffTime = d2 - d1;
+                days = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+            }
+
+            // Instancia temporal de la Clase Arriendo
+            const arriendoTemp = new Arriendo('A-' + Date.now(), new Date(startStr), new Date(limitStr), producto, clienteActual);
+
+            let basePrice = (producto.precio * 0.25) * (days / 7);
+            let vipDiscount = clienteActual.esVIP ? basePrice * 0.10 : 0;
+            
+            // Invocación explícita del método UML calcularMulta()
+            let fine = arriendoTemp.calcularMulta(delayDays);
+            let totalArriendo = (basePrice - vipDiscount) + fine;
+
+            document.getElementById('previewBasePrice').innerText = `$${Math.round(basePrice).toLocaleString('es-CL')}`;
+            document.getElementById('previewDays').innerText = `${days} días`;
+            document.getElementById('previewVipDiscount').innerText = `-$${Math.round(vipDiscount).toLocaleString('es-CL')}`;
+            document.getElementById('previewFine').innerText = `$${Math.round(fine).toLocaleString('es-CL')}`;
+            document.getElementById('previewTotal').innerText = `$${Math.round(totalArriendo).toLocaleString('es-CL')}`;
+        }
+
+        function confirmRental() {
+            const selectId = document.getElementById('rentalGameSelect').value;
+            const producto = inventarioProductos.find(p => p.id === selectId) || inventarioProductos[0];
+            const delayDays = parseInt(document.getElementById('rentalDelayDays').value) || 0;
+            const startStr = document.getElementById('rentalStartDate').value;
+            const limitStr = document.getElementById('rentalLimitDate').value;
+
+            const nuevoArriendo = new Arriendo('ARR-' + Date.now(), new Date(startStr), new Date(limitStr), producto, clienteActual);
+            
+            const multaMonto = nuevoArriendo.calcularMulta(delayDays);
+            if (multaMonto > 0) {
+                listaMultasHistorial.push({
+                    id: 'M-' + Date.now(),
+                    clienteNombre: clienteActual.nombre,
+                    clienteRut: clienteActual.rut,
+                    productoNombre: producto.nombre,
+                    diasAtraso: delayDays,
+                    monto: multaMonto,
+                    estado: 'Pendiente'
+                });
+                renderMultasTable();
+            }
+
+            alert(`¡Arriendo #${nuevoArriendo.idArriendo} registrado con éxito para ${clienteActual.nombre}!`);
+            document.getElementById('rentalDelayDays').value = 0;
+            calculateRentalPreview();
+        }
+
+        function renderMultasTable() {
+            const tableBody = document.getElementById('multasTableBody');
+            const badge = document.getElementById('multasBadge');
+            tableBody.innerHTML = '';
+
+            if (listaMultasHistorial.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">No hay multas o infracciones registradas en la clase Arriendo.</td></tr>`;
+                badge.classList.add('hidden');
+                return;
+            }
+
+            const pendientes = listaMultasHistorial.filter(m => m.estado === 'Pendiente').length;
+            if (pendientes > 0) {
+                badge.innerText = pendientes;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            listaMultasHistorial.forEach(m => {
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-gaming-800/40 transition">
+                        <td class="p-4 font-semibold text-slate-200">${m.clienteNombre} <br><span class="text-xs text-slate-500">${m.clienteRut}</span></td>
+                        <td class="p-4 text-purple-300">${m.productoNombre}</td>
+                        <td class="p-4 font-bold text-rose-400">${m.diasAtraso} días</td>
+                        <td class="p-4 font-extrabold text-fuchsia-400">$${m.monto.toLocaleString('es-CL')}</td>
+                        <td class="p-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold ${m.estado === 'Pendiente' ? 'bg-rose-950/80 text-rose-400 border border-rose-800/50' : 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/50'}">
+                                ${m.estado}
+                            </span>
+                        </td>
+                        <td class="p-4 text-center">
+                            ${m.estado === 'Pendiente' ? `<button onclick="pagarMultaAccion('${m.id}')" class="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition font-semibold shadow-md">Pagar Multa</button>` : `<span class="text-xs text-slate-500"><i class="fa-solid fa-check mr-1"></i>Saldada</span>`}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function pagarMultaAccion(id) {
+            const multa = listaMultasHistorial.find(m => m.id === id);
+            if (multa) {
+                multa.estado = 'Pagada';
+                renderMultasTable();
+                alert('La multa ha sido pagada y saldada con éxito.');
+            }
+        }
+
+        function toggleCart() {
+            const drawer = document.getElementById('cartDrawer');
+            const overlay = document.getElementById('cartOverlay');
+            drawer.classList.toggle('translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
